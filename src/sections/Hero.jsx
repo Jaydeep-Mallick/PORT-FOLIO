@@ -27,27 +27,6 @@ export default function Hero() {
     }
   };
 
-  const wordVariants = {
-    hidden: {},
-    visible: {
-      transition: {
-        staggerChildren: 0.05,
-        delayChildren: 0.1
-      }
-    }
-  };
-
-  const letterVariants = {
-    hidden: { y: "115%", opacity: 0, rotate: 6, scale: 0.85 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      rotate: 0,
-      scale: 1,
-      transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] }
-    }
-  };
-
   const nameWords = name.split(" ");
 
   const handleScrollToProjects = () => {
@@ -88,23 +67,15 @@ export default function Hero() {
         {/* Big Animated Developer Name */}
         <h1 className="font-display font-black text-6xl sm:text-7xl md:text-8xl tracking-tight leading-[0.9] uppercase text-white mb-6">
           {nameWords.map((word, idx) => (
-            <span key={idx} className="inline-block whitespace-nowrap overflow-hidden pb-1 mr-4">
+            <span key={idx} className="block overflow-hidden pb-1">
               <motion.span
-                variants={wordVariants}
-                className="inline-block"
+                variants={itemVariants}
+                className="inline-block origin-left"
+                style={{
+                  textShadow: "0 0 40px rgba(168, 85, 247, 0.15)",
+                }}
               >
-                {word.split("").map((char, charIdx) => (
-                  <motion.span
-                    key={charIdx}
-                    variants={letterVariants}
-                    className="inline-block origin-bottom-left"
-                    style={{
-                      textShadow: "0 0 40px rgba(168, 85, 247, 0.15)",
-                    }}
-                  >
-                    {char}
-                  </motion.span>
-                ))}
+                {word}
               </motion.span>
             </span>
           ))}
