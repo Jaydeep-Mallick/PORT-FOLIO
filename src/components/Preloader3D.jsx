@@ -35,7 +35,7 @@ export default function Preloader3D({ progress }) {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    // 4. Helper to create high-quality language texture dynamically with SVG logo
+    // 4. Helper to create language texture with subtle styling
     const createLanguageTexture = (tech, color) => {
       const textureCanvas = document.createElement("canvas");
       textureCanvas.width = 128;
@@ -44,22 +44,19 @@ export default function Preloader3D({ progress }) {
 
       // Draw initial fallback state with text
       const drawFallback = () => {
-        // Solid dark background
-        ctx.fillStyle = "#0c0a1f";
+        ctx.fillStyle = "#0a081a";
         ctx.fillRect(0, 0, 128, 128);
 
-        // Cyber glowing border
+        // Thin, subtle border
         ctx.strokeStyle = color;
-        ctx.lineWidth = 8;
-        ctx.strokeRect(4, 4, 120, 120);
+        ctx.lineWidth = 4;
+        ctx.strokeRect(2, 2, 124, 124);
 
         // Text placeholder
         ctx.fillStyle = color;
-        ctx.font = "bold 26px sans-serif";
+        ctx.font = "bold 24px sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.shadowColor = color;
-        ctx.shadowBlur = 8;
         ctx.fillText(tech.text, 64, 64);
       };
 
@@ -89,22 +86,22 @@ export default function Preloader3D({ progress }) {
 
       img.onload = () => {
         // Redraw canvas with the logo image replacing the text
-        ctx.shadowBlur = 0; // Clear text shadow for crisp rendering
-        ctx.fillStyle = "#0c0a1f";
+        ctx.fillStyle = "#0a081a";
         ctx.fillRect(0, 0, 128, 128);
 
+        // Thin, subtle border
         ctx.strokeStyle = color;
-        ctx.lineWidth = 8;
-        ctx.strokeRect(4, 4, 120, 120);
+        ctx.lineWidth = 4;
+        ctx.strokeRect(2, 2, 124, 124);
 
-        // Render logo centered with padding
-        ctx.drawImage(img, 24, 24, 80, 80);
+        // Render logo centered with larger padding (making it smaller)
+        ctx.drawImage(img, 34, 34, 60, 60);
         
         // Notify Three.js that texture needs updating
         texture.needsUpdate = true;
       };
 
-      // Fallback if loading fails (keep text placeholder)
+      // Fallback if loading fails
       img.onerror = () => {
         drawFallback();
         texture.needsUpdate = true;
@@ -217,7 +214,8 @@ export default function Preloader3D({ progress }) {
       { text: "TW", color: "#06b6d4" }
     ];
 
-    const boxGeo = new THREE.BoxGeometry(0.55, 0.55, 0.55);
+    // Slightly smaller box size
+    const boxGeo = new THREE.BoxGeometry(0.42, 0.42, 0.42);
     const scatteredMeshes = [];
     const placedPositions = [];
     
@@ -267,10 +265,11 @@ export default function Preloader3D({ progress }) {
         // Generate texture for specific tech
         const techTexture = createLanguageTexture(tech, tech.color);
         
+        // Low opacity for a subtle, ghost-like cyber look
         const meshMat = new THREE.MeshBasicMaterial({
           map: techTexture,
           transparent: true,
-          opacity: 0.85,
+          opacity: 0.22, 
         });
 
         const mesh = new THREE.Mesh(boxGeo, meshMat);
