@@ -8,6 +8,7 @@ import Projects from "./sections/Projects";
 import About from "./sections/About";
 import Contact from "./sections/Contact";
 import { portfolioConfig } from "./config/portfolio";
+import Preloader3D from "./components/Preloader3D";
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -72,26 +73,30 @@ export default function App() {
               <span>© {new Date().getFullYear()}</span>
             </div>
 
-            {/* Middle title */}
-            <div className="text-left max-w-2xl self-center w-full">
-              <motion.span 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="text-xs font-bold uppercase tracking-widest text-neon-pink block mb-4"
-              >
-                Portfolio Interface v2.6
-              </motion.span>
-              <h1 className="font-display font-black text-4xl sm:text-5xl md:text-6xl tracking-tight uppercase leading-none overflow-hidden">
+            {/* Middle 3D Preloader content */}
+            <div className="flex flex-col items-center justify-center self-center text-center max-w-3xl w-full">
+              {/* 3D Visualizer */}
+              <Preloader3D progress={loadingProgress} />
+
+              <h1 className="font-display font-black text-4xl sm:text-5xl md:text-7xl tracking-tighter uppercase leading-none overflow-hidden select-none bg-gradient-to-b from-white via-neutral-100 to-neutral-500 bg-clip-text text-transparent mt-2">
                 <motion.span
                   initial={{ y: "100%" }}
                   animate={{ y: 0 }}
-                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
                   className="inline-block"
                 >
-                  Initializing Experience
+                  Jaydeep Mallick
                 </motion.span>
               </h1>
+
+              <motion.span 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-neon-purple mt-3"
+              >
+                Initializing 3D Experience
+              </motion.span>
             </div>
 
             {/* Bottom loader tracker */}
