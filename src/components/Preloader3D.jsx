@@ -35,7 +35,38 @@ export default function Preloader3D({ progress }) {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    // 4. Geometries
+    // 4. Helper to create high-quality language texture dynamically
+    const createLanguageTexture = (text, color) => {
+      const textureCanvas = document.createElement("canvas");
+      textureCanvas.width = 128;
+      textureCanvas.height = 128;
+      const ctx = textureCanvas.getContext("2d");
+
+      // Solid dark cyber background
+      ctx.fillStyle = "#0c0a1f";
+      ctx.fillRect(0, 0, 128, 128);
+
+      // Cyber glowing border
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 8;
+      ctx.strokeRect(4, 4, 120, 120);
+
+      // Core text styling
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 38px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      // Apply shadow glow for premium neon feel
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 12;
+      ctx.fillText(text, 64, 64);
+
+      const texture = new THREE.CanvasTexture(textureCanvas);
+      return texture;
+    };
+
+    // 5. Geometries & Central Group Setup
 
     // A. Digital particle Torus Knot (Central element behind text)
     const knotGeo = new THREE.TorusKnotGeometry(2.1, 0.55, 120, 16);
@@ -85,7 +116,7 @@ export default function Preloader3D({ progress }) {
     });
     const outerCage = new THREE.Mesh(cageGeo, cageMat);
 
-    // E. Outer Orbiting Ring (Torus)
+    // D. Outer Orbiting Ring (Torus)
     const ringGeo = new THREE.TorusGeometry(3.1, 0.04, 8, 64);
     const ringMat = new THREE.MeshBasicMaterial({
       color: 0xec4899,
@@ -107,7 +138,7 @@ export default function Preloader3D({ progress }) {
     centralGroup.scale.setScalar(0.82);
     scene.add(centralGroup);
 
-    // F. Ambient Floating Star Particles
+    // E. Ambient Floating Star Particles
     const dustCount = 80;
     const dustGeo = new THREE.BufferGeometry();
     const dustPositions = new Float32Array(dustCount * 3);
@@ -126,42 +157,46 @@ export default function Preloader3D({ progress }) {
     const dustField = new THREE.Points(dustGeo, dustMat);
     scene.add(dustField);
 
-    // G. Scattered Low-Poly Floating Geometries (No overlapping)
-    const scatteredGeometries = [
-      new THREE.BoxGeometry(0.3, 0.3, 0.3),
-      new THREE.TetrahedronGeometry(0.35),
-      new THREE.OctahedronGeometry(0.3),
-      new THREE.ConeGeometry(0.2, 0.4, 4),
-      new THREE.IcosahedronGeometry(0.25)
+    // F. Scattered Language 3D Logo Cubes (JS, Python, React, SQL, Node, Git, HTML, CSS, TW)
+    const techStack = [
+      { text: "JS", color: "#f7df1e" },
+      { text: "Python", color: "#3776ab" },
+      { text: "React", color: "#61dafb" },
+      { text: "SQL", color: "#00758f" },
+      { text: "Node", color: "#339933" },
+      { text: "Git", color: "#f05032" },
+      { text: "HTML", color: "#e34f26" },
+      { text: "CSS", color: "#1572b6" },
+      { text: "TW", color: "#06b6d4" }
     ];
 
+    const boxGeo = new THREE.BoxGeometry(0.55, 0.55, 0.55);
     const scatteredMeshes = [];
-    const numScattered = 22;
     const placedPositions = [];
-    const minDistanceBetweenShapes = 2.2; // Keep them spaced apart
+    
+    const minDistanceBetweenShapes = 2.4; 
+    const minDistanceFromCenter = 3.2;    // Avoid central preloader knot
+    const minDistanceFromBottom = 2.8;    // Avoid bottom progress bar/text area
 
-    for (let i = 0; i < numScattered; i++) {
+    // Create unique cubes for languages
+    techStack.forEach((tech) => {
       let x, y, z;
       let valid = false;
       let attempts = 0;
 
       while (!valid && attempts < 100) {
         attempts++;
-        // Spread across full screen coordinates
         x = (Math.random() - 0.5) * 18;     // -9 to 9
         y = (Math.random() - 0.5) * 10;     // -5 to 5
         z = (Math.random() - 0.5) * 6 - 2;  // -5 to 1
 
-        // Exclude central 3D group area (around y = 0.5) and bottom text/progress area (around y = -3.5)
         const distFromKnot = Math.sqrt(x * x + (y - 0.5) * (y - 0.5));
         const distFromText = Math.sqrt(x * x + (y + 3.5) * (y + 3.5));
         
-        // Ensure shapes stay clear of both centers
-        if (distFromKnot < 3.2 || distFromText < 2.8) {
+        if (distFromKnot < minDistanceFromCenter || distFromText < minDistanceFromBottom) {
           continue;
         }
 
-        // Distance from already placed items
         let tooClose = false;
         for (const pos of placedPositions) {
           const dx = x - pos.x;
@@ -182,20 +217,20 @@ export default function Preloader3D({ progress }) {
       if (valid) {
         placedPositions.push({ x, y, z });
 
-        const randomGeo = scatteredGeometries[Math.floor(Math.random() * scatteredGeometries.length)];
+        // Generate texture for specific tech
+        const techTexture = createLanguageTexture(tech.text, tech.color);
         
         const meshMat = new THREE.MeshBasicMaterial({
-          color: Math.random() > 0.5 ? 0xa855f7 : 0xec4899,
-          wireframe: true,
+          map: techTexture,
           transparent: true,
-          opacity: 0.15 + Math.random() * 0.25,
+          opacity: 0.85,
         });
 
-        const mesh = new THREE.Mesh(randomGeo, meshMat);
+        const mesh = new THREE.Mesh(boxGeo, meshMat);
         mesh.position.set(x, y, z);
 
-        // Save custom animation attributes in userData
         mesh.userData = {
+          texture: techTexture, // Reference for cleanup
           rotX: (Math.random() - 0.5) * 0.015,
           rotY: (Math.random() - 0.5) * 0.015,
           floatSpeed: 0.4 + Math.random() * 1.2,
@@ -205,13 +240,13 @@ export default function Preloader3D({ progress }) {
         scene.add(mesh);
         scatteredMeshes.push(mesh);
       }
-    }
+    });
 
-    // 5. Lighting
+    // 6. Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
-    // 6. Resize Handler
+    // 7. Resize Handler
     const handleResize = () => {
       if (!canvas) return;
       const width = window.innerWidth;
@@ -223,26 +258,25 @@ export default function Preloader3D({ progress }) {
 
     window.addEventListener("resize", handleResize);
 
-    // 7. Animation Loop
+    // 8. Animation Loop
     const clock = new THREE.Clock();
 
     const animate = () => {
       const elapsedTime = clock.getElapsedTime();
       const p = progressRef.current / 100; // 0 to 1
 
-      // Speed up rotation as progress increases
       const baseRotationSpeed = 0.2;
-      const speedMultiplier = 1 + p * 2.5; // Up to 3.5x speed at 100%
+      const speedMultiplier = 1 + p * 2.5;
       
       // Central Knot rotation
       particleKnot.rotation.x = elapsedTime * baseRotationSpeed * speedMultiplier;
       particleKnot.rotation.y = elapsedTime * (baseRotationSpeed + 0.05) * speedMultiplier;
 
-      // Inner Core rotation (counter-rotation)
+      // Inner Core rotation
       innerCore.rotation.x = -elapsedTime * 0.15;
       innerCore.rotation.y = -elapsedTime * 0.2;
 
-      // Outer Cage rotation (different axis and slow)
+      // Outer Cage rotation
       outerCage.rotation.x = -elapsedTime * 0.06;
       outerCage.rotation.y = elapsedTime * 0.09;
       outerCage.rotation.z = elapsedTime * 0.03;
@@ -253,11 +287,11 @@ export default function Preloader3D({ progress }) {
       // Ambient Dust rotation
       dustField.rotation.y = elapsedTime * 0.02;
 
-      // Pulse the scale of the outer particle knot matching progress
+      // Pulse central scale matching progress
       const targetScale = 0.95 + p * 0.25 + Math.sin(elapsedTime * 2) * 0.04;
       particleKnot.scale.setScalar(targetScale);
 
-      // Animate scattered shapes (rotation and drift)
+      // Animate language logo cubes (rotation and drift)
       scatteredMeshes.forEach(mesh => {
         mesh.rotation.x += mesh.userData.rotX * (1 + p);
         mesh.rotation.y += mesh.userData.rotY * (1 + p);
@@ -285,8 +319,7 @@ export default function Preloader3D({ progress }) {
       cageGeo.dispose();
       ringGeo.dispose();
       dustGeo.dispose();
-
-      scatteredGeometries.forEach(geo => geo.dispose());
+      boxGeo.dispose();
 
       pointsMat.dispose();
       wireMat.dispose();
@@ -296,13 +329,16 @@ export default function Preloader3D({ progress }) {
 
       scatteredMeshes.forEach(mesh => {
         mesh.material.dispose();
+        if (mesh.userData.texture) {
+          mesh.userData.texture.dispose();
+        }
       });
     };
   }, []);
 
   return (
     <>
-      {/* 3D Full-screen Canvas Backdrop (Set to z-10 to overlay container backgrounds but lay behind text) */}
+      {/* 3D Full-screen Canvas Backdrop */}
       <canvas 
         ref={canvasRef} 
         className="fixed inset-0 w-full h-full pointer-events-none z-10" 
