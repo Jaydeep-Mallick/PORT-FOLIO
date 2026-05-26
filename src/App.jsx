@@ -18,7 +18,7 @@ export default function App() {
   useEffect(() => {
     if (!loading) return;
 
-    const duration = 3000; // ms
+    const duration = 2800; // ms
     const intervalTime = 30; // update frequency
     const step = 100 / (duration / intervalTime);
 
