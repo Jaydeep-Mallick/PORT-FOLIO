@@ -20,7 +20,7 @@ export default function Preloader3D({ progress }) {
     // 2. Camera Setup
     const camera = new THREE.PerspectiveCamera(
       45,
-      canvas.clientWidth / canvas.clientHeight,
+      window.innerWidth / window.innerHeight,
       0.1,
       100
     );
@@ -32,12 +32,12 @@ export default function Preloader3D({ progress }) {
       antialias: true,
       alpha: true,
     });
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
     // 4. Geometries
 
-    // A. Digital particle Torus Knot (Central element)
+    // A. Digital particle Torus Knot (Central element behind text)
     const knotGeo = new THREE.TorusKnotGeometry(2.1, 0.55, 120, 16);
     
     // Custom colors for points
@@ -60,7 +60,7 @@ export default function Preloader3D({ progress }) {
       size: 0.05,
       vertexColors: true,
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.7,
     });
 
     const particleKnot = new THREE.Points(knotGeo, pointsMat);
@@ -72,7 +72,7 @@ export default function Preloader3D({ progress }) {
       color: 0xec4899,
       wireframe: true,
       transparent: true,
-      opacity: 0.25,
+      opacity: 0.2,
     });
     const innerCore = new THREE.Mesh(sphereGeo, wireMat);
     scene.add(innerCore);
@@ -83,7 +83,7 @@ export default function Preloader3D({ progress }) {
       color: 0xa855f7,
       wireframe: true,
       transparent: true,
-      opacity: 0.1,
+      opacity: 0.08,
     });
     const outerCage = new THREE.Mesh(cageGeo, cageMat);
     scene.add(outerCage);
@@ -93,32 +93,32 @@ export default function Preloader3D({ progress }) {
     const ringMat = new THREE.MeshBasicMaterial({
       color: 0xec4899,
       transparent: true,
-      opacity: 0.2,
+      opacity: 0.15,
     });
     const orbitalRing = new THREE.Mesh(ringGeo, ringMat);
     orbitalRing.rotation.x = Math.PI / 2.5; // Tilt the ring for orbit effect
     scene.add(orbitalRing);
 
     // E. Ambient Floating Star Particles
-    const dustCount = 60;
+    const dustCount = 80;
     const dustGeo = new THREE.BufferGeometry();
     const dustPositions = new Float32Array(dustCount * 3);
     for (let i = 0; i < dustCount * 3; i += 3) {
-      dustPositions[i] = (Math.random() - 0.5) * 12;
+      dustPositions[i] = (Math.random() - 0.5) * 20;
       dustPositions[i + 1] = (Math.random() - 0.5) * 12;
-      dustPositions[i + 2] = (Math.random() - 0.5) * 6;
+      dustPositions[i + 2] = (Math.random() - 0.5) * 8;
     }
     dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPositions, 3));
     const dustMat = new THREE.PointsMaterial({
       size: 0.03,
       color: 0xffffff,
       transparent: true,
-      opacity: 0.3,
+      opacity: 0.35,
     });
     const dustField = new THREE.Points(dustGeo, dustMat);
     scene.add(dustField);
 
-    // F. Scattered Low-Poly Floating Geometries
+    // F. Scattered Low-Poly Floating Geometries (No overlapping)
     const scatteredGeometries = [
       new THREE.BoxGeometry(0.3, 0.3, 0.3),
       new THREE.TetrahedronGeometry(0.35),
@@ -128,41 +128,73 @@ export default function Preloader3D({ progress }) {
     ];
 
     const scatteredMeshes = [];
-    const numScattered = 18;
+    const numScattered = 22;
+    const placedPositions = [];
+    const minDistanceBetweenShapes = 2.2; // Keep them spaced apart
+    const minDistanceFromCenter = 3.6;     // Keep the central text area clear
 
     for (let i = 0; i < numScattered; i++) {
-      const randomGeo = scatteredGeometries[Math.floor(Math.random() * scatteredGeometries.length)];
-      
-      const meshMat = new THREE.MeshBasicMaterial({
-        color: Math.random() > 0.5 ? 0xa855f7 : 0xec4899,
-        wireframe: true,
-        transparent: true,
-        opacity: 0.25 + Math.random() * 0.2, // Random visibility
-      });
+      let x, y, z;
+      let valid = false;
+      let attempts = 0;
 
-      const mesh = new THREE.Mesh(randomGeo, meshMat);
+      while (!valid && attempts < 100) {
+        attempts++;
+        // Spread across full screen coordinates
+        x = (Math.random() - 0.5) * 18;     // -9 to 9
+        y = (Math.random() - 0.5) * 10;     // -5 to 5
+        z = (Math.random() - 0.5) * 6 - 2;  // -5 to 1
 
-      // Random scatter positions in a shell around the main knot
-      const angle = Math.random() * Math.PI * 2;
-      const radius = 3.8 + Math.random() * 2.2;
-      
-      mesh.position.set(
-        Math.cos(angle) * radius,
-        (Math.random() - 0.5) * 5,
-        (Math.random() - 0.5) * 4
-      );
+        // 2D distance from center to keep text readable
+        const distFromCenter = Math.sqrt(x * x + y * y);
+        if (distFromCenter < minDistanceFromCenter) {
+          continue;
+        }
 
-      // Save custom animation attributes in userData
-      mesh.userData = {
-        rotX: (Math.random() - 0.5) * 0.02,
-        rotY: (Math.random() - 0.5) * 0.02,
-        floatSpeed: 0.5 + Math.random() * 1.5,
-        floatDistance: 0.05 + Math.random() * 0.15,
-        offset: Math.random() * 100
-      };
+        // Distance from already placed items
+        let tooClose = false;
+        for (const pos of placedPositions) {
+          const dx = x - pos.x;
+          const dy = y - pos.y;
+          const dz = z - pos.z;
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          if (dist < minDistanceBetweenShapes) {
+            tooClose = true;
+            break;
+          }
+        }
 
-      scene.add(mesh);
-      scatteredMeshes.push(mesh);
+        if (!tooClose) {
+          valid = true;
+        }
+      }
+
+      if (valid) {
+        placedPositions.push({ x, y, z });
+
+        const randomGeo = scatteredGeometries[Math.floor(Math.random() * scatteredGeometries.length)];
+        
+        const meshMat = new THREE.MeshBasicMaterial({
+          color: Math.random() > 0.5 ? 0xa855f7 : 0xec4899,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.15 + Math.random() * 0.25,
+        });
+
+        const mesh = new THREE.Mesh(randomGeo, meshMat);
+        mesh.position.set(x, y, z);
+
+        // Save custom animation attributes in userData
+        mesh.userData = {
+          rotX: (Math.random() - 0.5) * 0.015,
+          rotY: (Math.random() - 0.5) * 0.015,
+          floatSpeed: 0.4 + Math.random() * 1.2,
+          offset: Math.random() * 100
+        };
+
+        scene.add(mesh);
+        scatteredMeshes.push(mesh);
+      }
     }
 
     // 5. Lighting
@@ -172,8 +204,8 @@ export default function Preloader3D({ progress }) {
     // 6. Resize Handler
     const handleResize = () => {
       if (!canvas) return;
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
@@ -221,8 +253,8 @@ export default function Preloader3D({ progress }) {
         mesh.rotation.y += mesh.userData.rotY * (1 + p);
         
         // Slow organic wave movement
-        mesh.position.y += Math.sin(elapsedTime * mesh.userData.floatSpeed + mesh.userData.offset) * 0.002;
-        mesh.position.x += Math.cos(elapsedTime * mesh.userData.floatSpeed * 0.8 + mesh.userData.offset) * 0.001;
+        mesh.position.y += Math.sin(elapsedTime * mesh.userData.floatSpeed + mesh.userData.offset) * 0.0015;
+        mesh.position.x += Math.cos(elapsedTime * mesh.userData.floatSpeed * 0.8 + mesh.userData.offset) * 0.0008;
       });
 
       // Render
@@ -230,10 +262,11 @@ export default function Preloader3D({ progress }) {
       requestAnimationFrame(animate);
     };
 
-    animate();
+    const animationId = requestAnimationFrame(animate);
 
     // Clean up
     return () => {
+      cancelAnimationFrame(animationId);
       window.removeEventListener("resize", handleResize);
       renderer.dispose();
       
@@ -258,12 +291,14 @@ export default function Preloader3D({ progress }) {
   }, []);
 
   return (
-    <div className="w-80 h-80 md:w-96 md:h-96 relative flex items-center justify-center select-none pointer-events-none">
-      {/* 3D Canvas */}
-      <canvas ref={canvasRef} className="w-full h-full absolute inset-0 z-10" />
-      
-      {/* Radial Glow underneath */}
-      <div className="absolute w-44 h-44 rounded-full bg-neon-purple/10 blur-[70px] animate-pulse z-0" />
-    </div>
+    <>
+      {/* 3D Full-screen Canvas Backdrop */}
+      <canvas 
+        ref={canvasRef} 
+        className="fixed inset-0 w-full h-full pointer-events-none z-0" 
+      />
+      {/* Central glow behind the text */}
+      <div className="absolute w-64 h-64 rounded-full bg-neon-purple/5 blur-[80px] animate-pulse z-0" />
+    </>
   );
 }
