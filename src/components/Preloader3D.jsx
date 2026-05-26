@@ -64,7 +64,6 @@ export default function Preloader3D({ progress }) {
     });
 
     const particleKnot = new THREE.Points(knotGeo, pointsMat);
-    scene.add(particleKnot);
 
     // B. Inner wireframe sphere for core depth
     const sphereGeo = new THREE.SphereGeometry(0.9, 12, 12);
@@ -75,7 +74,6 @@ export default function Preloader3D({ progress }) {
       opacity: 0.2,
     });
     const innerCore = new THREE.Mesh(sphereGeo, wireMat);
-    scene.add(innerCore);
 
     // C. Outer Wireframe Cage (Dodecahedron)
     const cageGeo = new THREE.DodecahedronGeometry(3.5, 1);
@@ -86,7 +84,6 @@ export default function Preloader3D({ progress }) {
       opacity: 0.08,
     });
     const outerCage = new THREE.Mesh(cageGeo, cageMat);
-    scene.add(outerCage);
 
     // D. Outer Orbiting Ring (Torus)
     const ringGeo = new THREE.TorusGeometry(3.1, 0.04, 8, 64);
@@ -97,7 +94,18 @@ export default function Preloader3D({ progress }) {
     });
     const orbitalRing = new THREE.Mesh(ringGeo, ringMat);
     orbitalRing.rotation.x = Math.PI / 2.5; // Tilt the ring for orbit effect
-    scene.add(orbitalRing);
+
+    // Group the central elements, scale them down, and move them up (above the text)
+    const centralGroup = new THREE.Group();
+    centralGroup.add(particleKnot);
+    centralGroup.add(innerCore);
+    centralGroup.add(outerCage);
+    centralGroup.add(orbitalRing);
+    
+    // Shift up and scale down as requested
+    centralGroup.position.y = 1.8;
+    centralGroup.scale.setScalar(0.62);
+    scene.add(centralGroup);
 
     // E. Ambient Floating Star Particles
     const dustCount = 80;
@@ -131,7 +139,6 @@ export default function Preloader3D({ progress }) {
     const numScattered = 22;
     const placedPositions = [];
     const minDistanceBetweenShapes = 2.2; // Keep them spaced apart
-    const minDistanceFromCenter = 3.6;     // Keep the central text area clear
 
     for (let i = 0; i < numScattered; i++) {
       let x, y, z;
@@ -145,9 +152,11 @@ export default function Preloader3D({ progress }) {
         y = (Math.random() - 0.5) * 10;     // -5 to 5
         z = (Math.random() - 0.5) * 6 - 2;  // -5 to 1
 
-        // 2D distance from center to keep text readable
-        const distFromCenter = Math.sqrt(x * x + y * y);
-        if (distFromCenter < minDistanceFromCenter) {
+        // Exclude central 3D group area (around y = 1.8) and text area (around y = -0.5)
+        const distFromKnot = Math.sqrt(x * x + (y - 1.8) * (y - 1.8));
+        const distFromText = Math.sqrt(x * x + (y + 0.5) * (y + 0.5));
+        
+        if (distFromKnot < 2.2 || distFromText < 2.2) {
           continue;
         }
 

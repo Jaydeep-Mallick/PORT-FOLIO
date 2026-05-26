@@ -74,11 +74,11 @@ export default function App() {
             </div>
 
             {/* Middle 3D Preloader content */}
-            <div className="flex flex-col items-center justify-center self-center text-center max-w-3xl w-full">
+            <div className="flex flex-col items-center justify-center self-center text-center max-w-3xl w-full relative z-10">
               {/* 3D Visualizer */}
               <Preloader3D progress={loadingProgress} />
 
-              <h1 className="font-display font-black text-4xl sm:text-5xl md:text-7xl tracking-tighter uppercase leading-none overflow-hidden select-none bg-gradient-to-b from-white via-neutral-100 to-neutral-500 bg-clip-text text-transparent mt-2">
+              <h1 className="font-display font-black text-4xl sm:text-5xl md:text-7xl tracking-tighter uppercase leading-none overflow-hidden select-none text-white mt-2">
                 <motion.span
                   initial={{ y: "100%" }}
                   animate={{ y: 0 }}
