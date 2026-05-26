@@ -36,8 +36,9 @@ export default function Preloader3D({ progress }) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
     // 4. Geometries
-    // A digital particle Torus Knot
-    const knotGeo = new THREE.TorusKnotGeometry(2.5, 0.7, 120, 16);
+
+    // A. Digital particle Torus Knot (Central element)
+    const knotGeo = new THREE.TorusKnotGeometry(2.2, 0.6, 120, 16);
     
     // Custom colors for points
     const count = knotGeo.attributes.position.count;
@@ -65,8 +66,8 @@ export default function Preloader3D({ progress }) {
     const particleKnot = new THREE.Points(knotGeo, pointsMat);
     scene.add(particleKnot);
 
-    // Inner wireframe sphere for core depth
-    const sphereGeo = new THREE.SphereGeometry(1.2, 12, 12);
+    // B. Inner wireframe sphere for core depth
+    const sphereGeo = new THREE.SphereGeometry(1.0, 12, 12);
     const wireMat = new THREE.MeshBasicMaterial({
       color: 0xec4899,
       wireframe: true,
@@ -76,7 +77,48 @@ export default function Preloader3D({ progress }) {
     const innerCore = new THREE.Mesh(sphereGeo, wireMat);
     scene.add(innerCore);
 
-    // 5. Lighting (For standard materials if added later, but good for depth)
+    // C. Outer Wireframe Cage (Dodecahedron)
+    const cageGeo = new THREE.DodecahedronGeometry(3.6, 1);
+    const cageMat = new THREE.MeshBasicMaterial({
+      color: 0xa855f7,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.12,
+    });
+    const outerCage = new THREE.Mesh(cageGeo, cageMat);
+    scene.add(outerCage);
+
+    // D. Outer Orbiting Ring (Torus)
+    const ringGeo = new THREE.TorusGeometry(3.3, 0.04, 8, 64);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xec4899,
+      transparent: true,
+      opacity: 0.25,
+    });
+    const orbitalRing = new THREE.Mesh(ringGeo, ringMat);
+    orbitalRing.rotation.x = Math.PI / 2.5; // Tilt the ring for orbit effect
+    scene.add(orbitalRing);
+
+    // E. Ambient Floating Star Particles
+    const dustCount = 80;
+    const dustGeo = new THREE.BufferGeometry();
+    const dustPositions = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount * 3; i += 3) {
+      dustPositions[i] = (Math.random() - 0.5) * 12;
+      dustPositions[i + 1] = (Math.random() - 0.5) * 12;
+      dustPositions[i + 2] = (Math.random() - 0.5) * 6;
+    }
+    dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPositions, 3));
+    const dustMat = new THREE.PointsMaterial({
+      size: 0.035,
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.4,
+    });
+    const dustField = new THREE.Points(dustGeo, dustMat);
+    scene.add(dustField);
+
+    // 5. Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
@@ -103,11 +145,24 @@ export default function Preloader3D({ progress }) {
       const baseRotationSpeed = 0.2;
       const speedMultiplier = 1 + p * 2.5; // Up to 3.5x speed at 100%
       
+      // Central Knot rotation
       particleKnot.rotation.x = elapsedTime * baseRotationSpeed * speedMultiplier;
       particleKnot.rotation.y = elapsedTime * (baseRotationSpeed + 0.05) * speedMultiplier;
 
+      // Inner Core rotation (counter-rotation)
       innerCore.rotation.x = -elapsedTime * 0.15;
       innerCore.rotation.y = -elapsedTime * 0.2;
+
+      // Outer Cage rotation (different axis and slow)
+      outerCage.rotation.x = -elapsedTime * 0.06;
+      outerCage.rotation.y = elapsedTime * 0.09;
+      outerCage.rotation.z = elapsedTime * 0.03;
+
+      // Orbital Ring rotation
+      orbitalRing.rotation.z = -elapsedTime * 0.15 * speedMultiplier;
+
+      // Ambient Dust rotation
+      dustField.rotation.y = elapsedTime * 0.02;
 
       // Pulse the scale of the outer particle knot matching progress
       const targetScale = 0.95 + p * 0.25 + Math.sin(elapsedTime * 2) * 0.04;
@@ -124,10 +179,18 @@ export default function Preloader3D({ progress }) {
     return () => {
       window.removeEventListener("resize", handleResize);
       renderer.dispose();
+      
       knotGeo.dispose();
       sphereGeo.dispose();
+      cageGeo.dispose();
+      ringGeo.dispose();
+      dustGeo.dispose();
+
       pointsMat.dispose();
       wireMat.dispose();
+      cageMat.dispose();
+      ringMat.dispose();
+      dustMat.dispose();
     };
   }, []);
 
