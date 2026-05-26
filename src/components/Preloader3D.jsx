@@ -35,34 +35,81 @@ export default function Preloader3D({ progress }) {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    // 4. Helper to create high-quality language texture dynamically
-    const createLanguageTexture = (text, color) => {
+    // 4. Helper to create high-quality language texture dynamically with SVG logo
+    const createLanguageTexture = (tech, color) => {
       const textureCanvas = document.createElement("canvas");
       textureCanvas.width = 128;
       textureCanvas.height = 128;
       const ctx = textureCanvas.getContext("2d");
 
-      // Solid dark cyber background
-      ctx.fillStyle = "#0c0a1f";
-      ctx.fillRect(0, 0, 128, 128);
+      // Draw initial fallback state with text
+      const drawFallback = () => {
+        // Solid dark background
+        ctx.fillStyle = "#0c0a1f";
+        ctx.fillRect(0, 0, 128, 128);
 
-      // Cyber glowing border
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 8;
-      ctx.strokeRect(4, 4, 120, 120);
+        // Cyber glowing border
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 8;
+        ctx.strokeRect(4, 4, 120, 120);
 
-      // Core text styling
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 38px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
+        // Text placeholder
+        ctx.fillStyle = color;
+        ctx.font = "bold 26px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 8;
+        ctx.fillText(tech.text, 64, 64);
+      };
 
-      // Apply shadow glow for premium neon feel
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 12;
-      ctx.fillText(text, 64, 64);
-
+      drawFallback();
       const texture = new THREE.CanvasTexture(textureCanvas);
+
+      // Async load official brand SVG from SimpleIcons
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+
+      const slugMap = {
+        JS: "javascript",
+        Python: "python",
+        React: "react",
+        SQL: "sqlite",
+        Node: "nodedotjs",
+        Git: "git",
+        HTML: "html5",
+        CSS: "css3",
+        TW: "tailwindcss",
+      };
+
+      const slug = slugMap[tech.text] || tech.text.toLowerCase();
+      const hexColor = color.replace("#", "");
+
+      img.src = `https://cdn.simpleicons.org/${slug}/${hexColor}`;
+
+      img.onload = () => {
+        // Redraw canvas with the logo image replacing the text
+        ctx.shadowBlur = 0; // Clear text shadow for crisp rendering
+        ctx.fillStyle = "#0c0a1f";
+        ctx.fillRect(0, 0, 128, 128);
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 8;
+        ctx.strokeRect(4, 4, 120, 120);
+
+        // Render logo centered with padding
+        ctx.drawImage(img, 24, 24, 80, 80);
+        
+        // Notify Three.js that texture needs updating
+        texture.needsUpdate = true;
+      };
+
+      // Fallback if loading fails (keep text placeholder)
+      img.onerror = () => {
+        drawFallback();
+        texture.needsUpdate = true;
+      };
+
       return texture;
     };
 
@@ -218,7 +265,7 @@ export default function Preloader3D({ progress }) {
         placedPositions.push({ x, y, z });
 
         // Generate texture for specific tech
-        const techTexture = createLanguageTexture(tech.text, tech.color);
+        const techTexture = createLanguageTexture(tech, tech.color);
         
         const meshMat = new THREE.MeshBasicMaterial({
           map: techTexture,
