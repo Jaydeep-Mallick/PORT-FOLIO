@@ -68,13 +68,13 @@ export default function App() {
             className="fixed inset-0 z-9999 flex flex-col justify-between p-10 bg-black text-white"
           >
             {/* Top info */}
-            <div className="flex justify-between items-center text-xs font-bold tracking-widest text-neutral-500 uppercase">
+            <div className="flex justify-between items-center text-xs font-bold tracking-widest text-neutral-500 uppercase relative z-20">
               <span>{portfolioConfig.personal.name}</span>
               <span>© {new Date().getFullYear()}</span>
             </div>
 
             {/* Middle 3D Preloader content */}
-            <div className="flex flex-col items-center justify-center self-center text-center max-w-3xl w-full relative z-10">
+            <div className="flex flex-col items-center justify-center self-center text-center max-w-3xl w-full relative z-20">
               {/* 3D Visualizer */}
               <Preloader3D progress={loadingProgress} />
 
@@ -100,7 +100,7 @@ export default function App() {
             </div>
 
             {/* Bottom loader tracker */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 relative z-20">
               <div className="flex justify-between items-end text-xs font-bold tracking-widest uppercase">
                 <span className="text-neutral-500">System Checklist Loading...</span>
                 <span className="text-white text-lg font-display font-black">{Math.round(loadingProgress)}%</span>

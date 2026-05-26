@@ -103,8 +103,8 @@ export default function Preloader3D({ progress }) {
     centralGroup.add(orbitalRing);
     
     // Shift up and scale down as requested
-    centralGroup.position.y = 1.8;
-    centralGroup.scale.setScalar(0.62);
+    centralGroup.position.y = 2.5;
+    centralGroup.scale.setScalar(0.52);
     scene.add(centralGroup);
 
     // E. Ambient Floating Star Particles
@@ -152,11 +152,12 @@ export default function Preloader3D({ progress }) {
         y = (Math.random() - 0.5) * 10;     // -5 to 5
         z = (Math.random() - 0.5) * 6 - 2;  // -5 to 1
 
-        // Exclude central 3D group area (around y = 1.8) and text area (around y = -0.5)
-        const distFromKnot = Math.sqrt(x * x + (y - 1.8) * (y - 1.8));
+        // Exclude central 3D group area (around y = 2.5) and text area (around y = -0.5)
+        const distFromKnot = Math.sqrt(x * x + (y - 2.5) * (y - 2.5));
         const distFromText = Math.sqrt(x * x + (y + 0.5) * (y + 0.5));
         
-        if (distFromKnot < 2.2 || distFromText < 2.2) {
+        // Ensure shapes stay completely clear of the text zone (increased to 3.2)
+        if (distFromKnot < 2.0 || distFromText < 3.2) {
           continue;
         }
 
@@ -301,10 +302,10 @@ export default function Preloader3D({ progress }) {
 
   return (
     <>
-      {/* 3D Full-screen Canvas Backdrop */}
+      {/* 3D Full-screen Canvas Backdrop (Set to z-10 to overlay container backgrounds but lay behind text) */}
       <canvas 
         ref={canvasRef} 
-        className="fixed inset-0 w-full h-full pointer-events-none z-0" 
+        className="fixed inset-0 w-full h-full pointer-events-none z-10" 
       />
       {/* Central glow behind the text */}
       <div className="absolute w-64 h-64 rounded-full bg-neon-purple/5 blur-[80px] animate-pulse z-0" />
