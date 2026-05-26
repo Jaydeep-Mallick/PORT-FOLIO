@@ -85,7 +85,7 @@ export default function Preloader3D({ progress }) {
     });
     const outerCage = new THREE.Mesh(cageGeo, cageMat);
 
-    // D. Outer Orbiting Ring (Torus)
+    // E. Outer Orbiting Ring (Torus)
     const ringGeo = new THREE.TorusGeometry(3.1, 0.04, 8, 64);
     const ringMat = new THREE.MeshBasicMaterial({
       color: 0xec4899,
@@ -95,19 +95,19 @@ export default function Preloader3D({ progress }) {
     const orbitalRing = new THREE.Mesh(ringGeo, ringMat);
     orbitalRing.rotation.x = Math.PI / 2.5; // Tilt the ring for orbit effect
 
-    // Group the central elements, scale them down, and move them up (above the text)
+    // Group the central elements, scale them to standard size, and place in balanced center-top area
     const centralGroup = new THREE.Group();
     centralGroup.add(particleKnot);
     centralGroup.add(innerCore);
     centralGroup.add(outerCage);
     centralGroup.add(orbitalRing);
     
-    // Shift up and scale down as requested
-    centralGroup.position.y = 2.5;
-    centralGroup.scale.setScalar(0.52);
+    // Position centrally (slightly shifted up for visual balance relative to bottom-anchored text)
+    centralGroup.position.y = 0.5;
+    centralGroup.scale.setScalar(0.82);
     scene.add(centralGroup);
 
-    // E. Ambient Floating Star Particles
+    // F. Ambient Floating Star Particles
     const dustCount = 80;
     const dustGeo = new THREE.BufferGeometry();
     const dustPositions = new Float32Array(dustCount * 3);
@@ -126,7 +126,7 @@ export default function Preloader3D({ progress }) {
     const dustField = new THREE.Points(dustGeo, dustMat);
     scene.add(dustField);
 
-    // F. Scattered Low-Poly Floating Geometries (No overlapping)
+    // G. Scattered Low-Poly Floating Geometries (No overlapping)
     const scatteredGeometries = [
       new THREE.BoxGeometry(0.3, 0.3, 0.3),
       new THREE.TetrahedronGeometry(0.35),
@@ -152,12 +152,12 @@ export default function Preloader3D({ progress }) {
         y = (Math.random() - 0.5) * 10;     // -5 to 5
         z = (Math.random() - 0.5) * 6 - 2;  // -5 to 1
 
-        // Exclude central 3D group area (around y = 2.5) and text area (around y = -0.5)
-        const distFromKnot = Math.sqrt(x * x + (y - 2.5) * (y - 2.5));
-        const distFromText = Math.sqrt(x * x + (y + 0.5) * (y + 0.5));
+        // Exclude central 3D group area (around y = 0.5) and bottom text/progress area (around y = -3.5)
+        const distFromKnot = Math.sqrt(x * x + (y - 0.5) * (y - 0.5));
+        const distFromText = Math.sqrt(x * x + (y + 3.5) * (y + 3.5));
         
-        // Ensure shapes stay completely clear of the text zone (increased to 3.2)
-        if (distFromKnot < 2.0 || distFromText < 3.2) {
+        // Ensure shapes stay clear of both centers
+        if (distFromKnot < 3.2 || distFromText < 2.8) {
           continue;
         }
 
