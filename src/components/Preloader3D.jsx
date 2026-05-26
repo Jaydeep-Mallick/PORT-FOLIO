@@ -38,7 +38,7 @@ export default function Preloader3D({ progress }) {
     // 4. Geometries
 
     // A. Digital particle Torus Knot (Central element)
-    const knotGeo = new THREE.TorusKnotGeometry(2.2, 0.6, 120, 16);
+    const knotGeo = new THREE.TorusKnotGeometry(2.1, 0.55, 120, 16);
     
     // Custom colors for points
     const count = knotGeo.attributes.position.count;
@@ -67,7 +67,7 @@ export default function Preloader3D({ progress }) {
     scene.add(particleKnot);
 
     // B. Inner wireframe sphere for core depth
-    const sphereGeo = new THREE.SphereGeometry(1.0, 12, 12);
+    const sphereGeo = new THREE.SphereGeometry(0.9, 12, 12);
     const wireMat = new THREE.MeshBasicMaterial({
       color: 0xec4899,
       wireframe: true,
@@ -78,29 +78,29 @@ export default function Preloader3D({ progress }) {
     scene.add(innerCore);
 
     // C. Outer Wireframe Cage (Dodecahedron)
-    const cageGeo = new THREE.DodecahedronGeometry(3.6, 1);
+    const cageGeo = new THREE.DodecahedronGeometry(3.5, 1);
     const cageMat = new THREE.MeshBasicMaterial({
       color: 0xa855f7,
       wireframe: true,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.1,
     });
     const outerCage = new THREE.Mesh(cageGeo, cageMat);
     scene.add(outerCage);
 
     // D. Outer Orbiting Ring (Torus)
-    const ringGeo = new THREE.TorusGeometry(3.3, 0.04, 8, 64);
+    const ringGeo = new THREE.TorusGeometry(3.1, 0.04, 8, 64);
     const ringMat = new THREE.MeshBasicMaterial({
       color: 0xec4899,
       transparent: true,
-      opacity: 0.25,
+      opacity: 0.2,
     });
     const orbitalRing = new THREE.Mesh(ringGeo, ringMat);
     orbitalRing.rotation.x = Math.PI / 2.5; // Tilt the ring for orbit effect
     scene.add(orbitalRing);
 
     // E. Ambient Floating Star Particles
-    const dustCount = 80;
+    const dustCount = 60;
     const dustGeo = new THREE.BufferGeometry();
     const dustPositions = new Float32Array(dustCount * 3);
     for (let i = 0; i < dustCount * 3; i += 3) {
@@ -110,13 +110,60 @@ export default function Preloader3D({ progress }) {
     }
     dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPositions, 3));
     const dustMat = new THREE.PointsMaterial({
-      size: 0.035,
+      size: 0.03,
       color: 0xffffff,
       transparent: true,
-      opacity: 0.4,
+      opacity: 0.3,
     });
     const dustField = new THREE.Points(dustGeo, dustMat);
     scene.add(dustField);
+
+    // F. Scattered Low-Poly Floating Geometries
+    const scatteredGeometries = [
+      new THREE.BoxGeometry(0.3, 0.3, 0.3),
+      new THREE.TetrahedronGeometry(0.35),
+      new THREE.OctahedronGeometry(0.3),
+      new THREE.ConeGeometry(0.2, 0.4, 4),
+      new THREE.IcosahedronGeometry(0.25)
+    ];
+
+    const scatteredMeshes = [];
+    const numScattered = 18;
+
+    for (let i = 0; i < numScattered; i++) {
+      const randomGeo = scatteredGeometries[Math.floor(Math.random() * scatteredGeometries.length)];
+      
+      const meshMat = new THREE.MeshBasicMaterial({
+        color: Math.random() > 0.5 ? 0xa855f7 : 0xec4899,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.25 + Math.random() * 0.2, // Random visibility
+      });
+
+      const mesh = new THREE.Mesh(randomGeo, meshMat);
+
+      // Random scatter positions in a shell around the main knot
+      const angle = Math.random() * Math.PI * 2;
+      const radius = 3.8 + Math.random() * 2.2;
+      
+      mesh.position.set(
+        Math.cos(angle) * radius,
+        (Math.random() - 0.5) * 5,
+        (Math.random() - 0.5) * 4
+      );
+
+      // Save custom animation attributes in userData
+      mesh.userData = {
+        rotX: (Math.random() - 0.5) * 0.02,
+        rotY: (Math.random() - 0.5) * 0.02,
+        floatSpeed: 0.5 + Math.random() * 1.5,
+        floatDistance: 0.05 + Math.random() * 0.15,
+        offset: Math.random() * 100
+      };
+
+      scene.add(mesh);
+      scatteredMeshes.push(mesh);
+    }
 
     // 5. Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -168,6 +215,16 @@ export default function Preloader3D({ progress }) {
       const targetScale = 0.95 + p * 0.25 + Math.sin(elapsedTime * 2) * 0.04;
       particleKnot.scale.setScalar(targetScale);
 
+      // Animate scattered shapes (rotation and drift)
+      scatteredMeshes.forEach(mesh => {
+        mesh.rotation.x += mesh.userData.rotX * (1 + p);
+        mesh.rotation.y += mesh.userData.rotY * (1 + p);
+        
+        // Slow organic wave movement
+        mesh.position.y += Math.sin(elapsedTime * mesh.userData.floatSpeed + mesh.userData.offset) * 0.002;
+        mesh.position.x += Math.cos(elapsedTime * mesh.userData.floatSpeed * 0.8 + mesh.userData.offset) * 0.001;
+      });
+
       // Render
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
@@ -186,21 +243,27 @@ export default function Preloader3D({ progress }) {
       ringGeo.dispose();
       dustGeo.dispose();
 
+      scatteredGeometries.forEach(geo => geo.dispose());
+
       pointsMat.dispose();
       wireMat.dispose();
       cageMat.dispose();
       ringMat.dispose();
       dustMat.dispose();
+
+      scatteredMeshes.forEach(mesh => {
+        mesh.material.dispose();
+      });
     };
   }, []);
 
   return (
-    <div className="w-64 h-64 md:w-80 md:h-80 relative flex items-center justify-center select-none pointer-events-none">
+    <div className="w-80 h-80 md:w-96 md:h-96 relative flex items-center justify-center select-none pointer-events-none">
       {/* 3D Canvas */}
       <canvas ref={canvasRef} className="w-full h-full absolute inset-0 z-10" />
       
       {/* Radial Glow underneath */}
-      <div className="absolute w-40 h-40 rounded-full bg-neon-purple/10 blur-[60px] animate-pulse z-0" />
+      <div className="absolute w-44 h-44 rounded-full bg-neon-purple/10 blur-[70px] animate-pulse z-0" />
     </div>
   );
 }
